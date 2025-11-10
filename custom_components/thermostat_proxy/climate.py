@@ -198,8 +198,11 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
         self._sensor_lookup: dict[str, SensorConfig] = {
             sensor.name: sensor for sensor in self._sensors
         }
-        if default_sensor and default_sensor in self._sensor_lookup:
-            self._selected_sensor_name = default_sensor
+        self._configured_default_sensor = (
+            default_sensor if default_sensor in self._sensor_lookup else None
+        )
+        if self._configured_default_sensor:
+            self._selected_sensor_name = self._configured_default_sensor
         else:
             self._selected_sensor_name = self._sensors[0].name
         self._sensor_states: dict[str, State | None] = {}
@@ -622,7 +625,9 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
             return
 
         restored_sensor = last_state.attributes.get(ATTR_ACTIVE_SENSOR)
-        if restored_sensor in self._sensor_lookup:
+        if self._configured_default_sensor:
+            self._selected_sensor_name = self._configured_default_sensor
+        elif restored_sensor in self._sensor_lookup:
             self._selected_sensor_name = restored_sensor
 
         restored_virtual = _coerce_temperature(last_state.attributes.get(ATTR_TEMPERATURE))
