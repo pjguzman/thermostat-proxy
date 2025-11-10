@@ -414,7 +414,7 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
     def target_temperature_step(self) -> float | None:
         if self._target_temp_step is not None:
             return self._target_temp_step
-        return DEFAULT_PRECISION
+        return 1.0
 
     @property
     def precision(self) -> float:
