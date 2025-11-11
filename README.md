@@ -2,6 +2,8 @@
 
 A Home Assistant custom integration that lets you expose a virtual `climate` entity which mirrors a real thermostat but lets you pick any temperature sensor to act as the “current temperature”. When you change the virtual target temperature, the integration calculates the difference between the selected sensor and the requested set point, then offsets the real thermostat so it behaves as if it were reading the chosen sensor.
 
+> Note: Thermostat Proxy is under active development, so expect rapid iteration and occasional breaking changes as options settle.
+
 ## Features
 
 - Wraps an existing `climate` entity; copies all of its attributes for dashboards/automations.
@@ -10,17 +12,17 @@ A Home Assistant custom integration that lets you expose a virtual `climate` ent
 - `climate.set_temperature` service adjusts the linked thermostat by the delta between the selected sensor reading and your requested temperature.
 - Exposes helper attributes: active sensor, sensor entity id, real current temperature, and the last real target temperature.
 - Remembers the previously selected sensor/target temperature across restarts and surfaces an `unavailable_entities` attribute so you can monitor unhealthy dependencies.
-- Always adds a built-in `Physical Thermostat` preset that points back to the wrapped thermostat’s own temperature reading so you can revert or set it as the default sensor.
+- Always adds a built-in `Physical Entity` preset that points back to the wrapped thermostat’s own temperature reading so you can revert or set it as the default sensor.
 
 ## Installation
 
 1. Copy the `custom_components/thermostat_proxy` directory into your Home Assistant `config/custom_components` folder.
 2. Restart Home Assistant.
-3. In Home Assistant, go to **Settings → Devices & Services → Add Integration → Thermostat Proxy** and walk through the wizard: pick the physical thermostat, add and name your temperature sensors (each name becomes a preset), and optionally choose which sensor (including the automatically provided “Physical Thermostat” option) should be active by default. You can revisit the integration’s **Configure** button later to change the default sensor without re-creating the entry.
+3. In Home Assistant, go to **Settings → Devices & Services → Add Integration → Thermostat Proxy** and walk through the wizard: pick the physical thermostat, add and name your temperature sensors (each name becomes a preset), and optionally choose which sensor (including the automatically provided “Physical Entity” option) should be active by default. You can revisit the integration’s **Configure** button later to change the default sensor without re-creating the entry.
 
 ## YAML Configuration
 
-If you prefer YAML, the platform is still available. Add it to the `climate` section of `configuration.yaml` (or a package). To use the built-in preset as your default, set `default_sensor: Physical Thermostat`:
+If you prefer YAML, the platform is still available. Add it to the `climate` section of `configuration.yaml` (or a package). To use the built-in preset as your default, set `default_sensor: Physical Entity`:
 
 ```yaml
 climate:
@@ -91,5 +93,5 @@ The integration will take the currently selected sensor’s temperature, compare
 - The component assumes a single target temperature (heat, cool, or auto with a shared set point). Dual set points (`target_temp_low` / `target_temp_high`) are not yet supported.
 - Because Home Assistant does not expose the real thermostat’s precision/step directly, changes to `current_temperature` or the linked thermostat may momentarily desync the displayed target temperature if another integration changes the physical thermostat. The entity exposes the real target temperature as an attribute so you can reconcile differences.
 - Networked thermostats can take a moment to acknowledge new targets; the custom entity updates immediately after the real thermostat reports its new state.
-- **Whole-degree sensors will appear “off by one.”** The custom entity only knows the rounded value, so a sensor that reports 67, 68, etc., forces the integration to treat every change as a full degree. In practice this means the virtual thermometer may say “1° below target” while the real thermostat has already closed the gap (because it can see its own 0.5° increments). If you want tighter alignment, pick a temperature sensor that exposes tenths, wrap the existing sensor with a `filter`/average entity, or intentionally bias the real thermostat a little higher via automations.
+- **Whole-degree sensors will appear “off by one” whenever the wrapped thermostat supports finer precision (0.5°, 0.1°, etc.).** The custom entity only knows the rounded value from that whole-degree sensor, so it must treat every change as a full degree while the physical thermostat can still react in smaller steps. In practice this means the virtual thermometer may say “1° below target” while the real thermostat has already closed the gap. If you want tighter alignment, pick a temperature sensor that exposes tenths, wrap the existing sensor with a `filter`/average entity, or intentionally bias the real thermostat a little higher via automations.
 - **Virtual target may “self-adjust” after the physical thermostat reports an update.** When the integration notices the real thermostat’s target or current temp changed outside of Home Assistant (manual knob, manufacturer cloud), it recomputes the virtual setpoint as `sensor + (real_target - real_current)` so the two stay in sync. With coarse sensors this can look like the HA target jumps from `68` to `67.5` on its own—that simply reflects the real thermostat only needing a half-degree boost.

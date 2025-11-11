@@ -1,5 +1,6 @@
 tmp_better_thermostat/
 .DS_Store
 AGENTS.md
+TODO.local.md
 __pycache__/
 *.pyc

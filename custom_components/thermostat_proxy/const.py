@@ -5,7 +5,7 @@ from __future__ import annotations
 DOMAIN = "thermostat_proxy"
 
 DEFAULT_NAME = "Thermostat Proxy"
-PHYSICAL_SENSOR_NAME = "Physical Thermostat"
+PHYSICAL_SENSOR_NAME = "Physical Entity"
 PHYSICAL_SENSOR_SENTINEL = "__thermostat_proxy_physical__"
 
 CONF_THERMOSTAT = "thermostat"
