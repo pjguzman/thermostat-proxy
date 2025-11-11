@@ -2,7 +2,7 @@
 
 A Home Assistant custom integration that lets you expose a virtual `climate` entity which mirrors a real thermostat but lets you pick any temperature sensor to act as the “current temperature”. When you change the virtual target temperature, the integration calculates the difference between the selected sensor and the requested set point, then offsets the real thermostat so it behaves as if it were reading the chosen sensor.
 
-> Note: Thermostat Proxy is under active development, so expect rapid iteration and occasional breaking changes as options settle.
+> ⚠️ **Caution — Active Development:** This integration is moving quickly. Expect frequent updates and occasional breaking changes while configuration options and defaults are still being refined.
 
 ## Features
 
