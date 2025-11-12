@@ -7,6 +7,7 @@ A Home Assistant custom integration that lets you expose a virtual `climate` ent
 > ⚠️ **Caution — Active Development:** This integration is moving quickly. Expect frequent updates and occasional breaking changes while configuration options and defaults are still being refined.
 
 ![Thermostat Proxy screenshot](images/main.png)
+![Comparison diagram](images/comparison.png)
 
 ## Features
 
