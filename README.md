@@ -23,16 +23,6 @@ A Home Assistant custom integration that lets you expose a virtual `climate` ent
 - Remembers the previously selected sensor/target temperature across restarts and surfaces an `unavailable_entities` attribute so you can monitor unhealthy dependencies.
 - Always adds a built-in preset for the wrapped thermostat’s own temperature reading (named `Physical Entity` by default, but you can rename it during setup) so you can revert or set it as the default sensor.
 
-## Installation
-
-1. Copy the `custom_components/thermostat_proxy` directory into your Home Assistant `config/custom_components` folder.
-2. Restart Home Assistant.
-3. In Home Assistant, go to **Settings → Devices & Services → Add Integration → Thermostat Proxy** and walk through the wizard: pick the physical thermostat, add and name your temperature sensors (each name becomes a preset), optionally rename the built-in physical thermostat preset, and choose which sensor should be active by default. You can revisit the integration’s **Configure** button later to change the default sensor without re-creating the entry.
-
-## Configuration Notes
-
-The integration is config-entry only. Use **Settings → Devices & Services → Add Integration** to create an entry. You can revisit the entry’s **Configure** button at any time to change the default sensor or rename existing presets.
-
 ## How It Works
 
 - `current_temperature` reflects the selected sensor. If its state is `unknown`/`unavailable`, the entity reports the real thermostat’s own temperature.
