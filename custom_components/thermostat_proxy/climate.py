@@ -64,6 +64,7 @@ from .const import (
     CONF_SENSORS,
     CONF_THERMOSTAT,
     CONF_UNIQUE_ID,
+    CONF_USE_LAST_ACTIVE_SENSOR,
     CONF_SYNC_PHYSICAL_CHANGES,
 )
 
@@ -104,6 +105,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_DEFAULT_SENSOR): cv.string,
         vol.Optional(CONF_PHYSICAL_SENSOR_NAME): cv.string,
+        vol.Optional(CONF_USE_LAST_ACTIVE_SENSOR, default=False): cv.boolean,
         vol.Optional(CONF_SYNC_PHYSICAL_CHANGES, default=False): cv.boolean,
     }
 )
@@ -129,6 +131,7 @@ async def async_setup_platform(
                 physical_sensor_name=config.get(
                     CONF_PHYSICAL_SENSOR_NAME, PHYSICAL_SENSOR_NAME
                 ),
+                use_last_active_sensor=config.get(CONF_USE_LAST_ACTIVE_SENSOR, False),
                 sync_physical_changes=config.get(CONF_SYNC_PHYSICAL_CHANGES, False),
             )
         ]
@@ -165,6 +168,11 @@ async def async_setup_entry(
         )
         default_sensor = None
 
+    use_last_active_sensor = entry.options.get(
+        CONF_USE_LAST_ACTIVE_SENSOR,
+        data.get(CONF_USE_LAST_ACTIVE_SENSOR, False),
+    )
+
     async_add_entities(
         [
             CustomThermostatEntity(
@@ -175,6 +183,7 @@ async def async_setup_entry(
                 default_sensor=default_sensor,
                 unique_id=data.get(CONF_UNIQUE_ID) or entry.entry_id,
                 physical_sensor_name=physical_sensor_name,
+                use_last_active_sensor=use_last_active_sensor,
                 sync_physical_changes=data.get(CONF_SYNC_PHYSICAL_CHANGES, False),
             )
         ]
@@ -204,6 +213,7 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
         default_sensor: str | None,
         unique_id: str | None,
         physical_sensor_name: str | None,
+        use_last_active_sensor: bool,
         sync_physical_changes: bool,
     ) -> None:
         self.hass = hass
@@ -225,6 +235,7 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
         self._configured_default_sensor = (
             default_sensor if default_sensor in self._sensor_lookup else None
         )
+        self._use_last_active_sensor = use_last_active_sensor
         if self._configured_default_sensor:
             self._selected_sensor_name = self._configured_default_sensor
         else:
@@ -788,10 +799,14 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
             return
 
         restored_sensor = last_state.attributes.get(ATTR_ACTIVE_SENSOR)
-        if self._configured_default_sensor:
+        if self._use_last_active_sensor and restored_sensor in self._sensor_lookup:
+            self._selected_sensor_name = restored_sensor
+        elif self._configured_default_sensor:
             self._selected_sensor_name = self._configured_default_sensor
         elif restored_sensor in self._sensor_lookup:
             self._selected_sensor_name = restored_sensor
+        elif self._configured_default_sensor:
+            self._selected_sensor_name = self._configured_default_sensor
 
         restored_virtual = _coerce_temperature(last_state.attributes.get(ATTR_TEMPERATURE))
         if restored_virtual is not None:

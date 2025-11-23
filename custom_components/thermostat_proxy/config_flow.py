@@ -21,6 +21,7 @@ from .const import (
     CONF_SYNC_PHYSICAL_CHANGES,
     CONF_THERMOSTAT,
     CONF_UNIQUE_ID,
+    CONF_USE_LAST_ACTIVE_SENSOR,
     DEFAULT_NAME,
     DOMAIN,
     PHYSICAL_SENSOR_NAME,
@@ -51,6 +52,7 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._sensors: list[dict[str, str]] = []
         self._default_sensor: str | None = None
         self._physical_sensor_name: str = PHYSICAL_SENSOR_NAME
+        self._use_last_active_sensor: bool = False
         self._sync_physical_changes: bool = False
         self._reconfigure_entry: config_entries.ConfigEntry | None = None
 
@@ -112,6 +114,9 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._default_sensor = entry.data.get(CONF_DEFAULT_SENSOR)
         self._physical_sensor_name = entry.data.get(
             CONF_PHYSICAL_SENSOR_NAME, PHYSICAL_SENSOR_NAME
+        )
+        self._use_last_active_sensor = entry.data.get(
+            CONF_USE_LAST_ACTIVE_SENSOR, False
         )
         self._sync_physical_changes = entry.data.get(CONF_SYNC_PHYSICAL_CHANGES, False)
 
@@ -282,6 +287,9 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             submitted_physical_name = user_input.get(
                 CONF_PHYSICAL_SENSOR_NAME, current_physical_name
             )
+            use_last_active_sensor = user_input.get(
+                CONF_USE_LAST_ACTIVE_SENSOR, self._use_last_active_sensor
+            )
             sync_physical_changes = user_input.get(
                 CONF_SYNC_PHYSICAL_CHANGES, self._sync_physical_changes
             )
@@ -306,6 +314,7 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 self._default_sensor = default_sensor
                 self._physical_sensor_name = physical_sensor_name
+                self._use_last_active_sensor = use_last_active_sensor
                 self._sync_physical_changes = sync_physical_changes
 
                 sensor_names_with_physical = list(sensor_names)
@@ -316,6 +325,7 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     **self._data,
                     CONF_SENSORS: self._sensors,
                     CONF_PHYSICAL_SENSOR_NAME: self._physical_sensor_name,
+                    CONF_USE_LAST_ACTIVE_SENSOR: self._use_last_active_sensor,
                     CONF_SYNC_PHYSICAL_CHANGES: self._sync_physical_changes,
                 }
                 if default_sensor:
@@ -346,6 +356,12 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
             )
         }
+
+        schema_fields[
+            vol.Optional(
+                CONF_USE_LAST_ACTIVE_SENSOR, default=self._use_last_active_sensor
+            )
+        ] = selector.BooleanSelector(selector.BooleanSelectorConfig())
 
         schema_fields[
             vol.Optional(
@@ -417,30 +433,40 @@ class CustomThermostatOptionsFlowHandler(config_entries.OptionsFlow):
             CONF_DEFAULT_SENSOR,
             self.config_entry.data.get(CONF_DEFAULT_SENSOR),
         )
+        use_last_active_sensor = self.config_entry.options.get(
+            CONF_USE_LAST_ACTIVE_SENSOR,
+            self.config_entry.data.get(CONF_USE_LAST_ACTIVE_SENSOR, False),
+        )
 
         errors: dict[str, str] = {}
         if user_input is not None:
             default_sensor = user_input.get(CONF_DEFAULT_SENSOR)
+            use_last_active_sensor = user_input.get(
+                CONF_USE_LAST_ACTIVE_SENSOR, use_last_active_sensor
+            )
             if default_sensor and default_sensor not in sensor_names:
                 errors["base"] = "invalid_default_sensor"
             else:
                 data: dict[str, Any] = {}
                 if default_sensor:
                     data[CONF_DEFAULT_SENSOR] = default_sensor
+                data[CONF_USE_LAST_ACTIVE_SENSOR] = use_last_active_sensor
                 return self.async_create_entry(title="", data=data)
 
-        if sensor_names == [None]:
-            data_schema = vol.Schema({})
-        else:
+        schema_fields: dict[Any, Any] = {
+            vol.Optional(
+                CONF_USE_LAST_ACTIVE_SENSOR, default=use_last_active_sensor
+            ): selector.BooleanSelector(selector.BooleanSelectorConfig())
+        }
+
+        if sensor_names != [None]:
             selector_config = selector.SelectSelectorConfig(options=sensor_names)
-            data_schema = vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_DEFAULT_SENSOR,
-                        default=current_default or sensor_names[0],
-                    ): selector.SelectSelector(selector_config)
-                }
-            )
+            schema_fields[vol.Optional(
+                CONF_DEFAULT_SENSOR,
+                default=current_default or sensor_names[0],
+            )] = selector.SelectSelector(selector_config)
+
+        data_schema = vol.Schema(schema_fields)
 
         return self.async_show_form(
             step_id="init",
