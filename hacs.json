@@ -1,6 +1,6 @@
 {
   "name": "Thermostat Proxy",
-  "content_in_root": false,
+  "content_in_root": true,
   "zip_release": true,
   "filename": "thermostat_proxy.zip",
   "render_readme": true
