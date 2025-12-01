@@ -263,6 +263,7 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
         self._min_temp: float | None = None
         self._max_temp: float | None = None
         self._target_temp_step: float | None = None
+        self._precision_override: float | None = None
         self._entity_health: dict[str, bool] = {}
         self._command_lock = asyncio.Lock()
         self._sensor_realign_task: asyncio.Task | None = None
@@ -543,11 +544,17 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
     def target_temperature_step(self) -> float | None:
         if self._target_temp_step is not None:
             return self._target_temp_step
-        return 1.0
+        if self._precision_override is not None:
+            return self._precision_override
+        return super().target_temperature_step
 
     @property
     def precision(self) -> float:
-        return self.target_temperature_step or DEFAULT_PRECISION
+        if self._precision_override is not None:
+            return self._precision_override
+        if self._target_temp_step is not None:
+            return self._target_temp_step
+        return super().precision
 
     @property
     def current_temperature(self) -> float | None:
@@ -936,6 +943,7 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
             self._min_temp = None
             self._max_temp = None
             self._target_temp_step = None
+            self._precision_override = None
             self._mark_entity_health(self._real_entity_id, False)
             return
 
@@ -944,11 +952,16 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
 
         self._min_temp = _coerce_temperature(self._real_state.attributes.get(ATTR_MIN_TEMP))
         self._max_temp = _coerce_temperature(self._real_state.attributes.get(ATTR_MAX_TEMP))
-        step_attr = self._real_state.attributes.get(ATTR_TARGET_TEMP_STEP)
-        try:
-            self._target_temp_step = float(step_attr) if step_attr is not None else None
-        except (TypeError, ValueError):
-            self._target_temp_step = None
+        self._target_temp_step = _coerce_positive_float(
+            self._real_state.attributes.get(ATTR_TARGET_TEMP_STEP)
+        )
+        real_precision = _coerce_positive_float(self._real_state.attributes.get("precision"))
+        if real_precision is not None:
+            self._precision_override = real_precision
+        elif self._target_temp_step is not None:
+            self._precision_override = self._target_temp_step
+        else:
+            self._precision_override = None
 
     def _update_sensor_health_from_state(self, entity_id: str | None, state: State | None) -> None:
         if not entity_id:
@@ -1183,3 +1196,10 @@ def _coerce_temperature(value: Any) -> float | None:
     if math.isnan(number):
         return None
     return number
+
+
+def _coerce_positive_float(value: Any) -> float | None:
+    result = _coerce_temperature(value)
+    if result is None or result <= 0:
+        return None
+    return result
