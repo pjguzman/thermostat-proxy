@@ -41,6 +41,9 @@ from homeassistant.const import (
     STATE_UNKNOWN,
     UnitOfTemperature,
 )
+from homeassistant.components.climate.const import (
+    ATTR_CURRENT_HUMIDITY,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, State, callback
 from homeassistant.helpers import config_validation as cv
@@ -54,6 +57,7 @@ from .const import (
     ATTR_ACTIVE_SENSOR_ENTITY_ID,
     ATTR_REAL_CURRENT_TEMPERATURE,
     ATTR_REAL_TARGET_TEMPERATURE,
+    ATTR_REAL_CURRENT_HUMIDITY,
     ATTR_SELECTED_SENSOR_OPTIONS,
     ATTR_UNAVAILABLE_ENTITIES,
     CONF_PHYSICAL_SENSOR_NAME,
@@ -93,6 +97,7 @@ _RESERVED_REAL_ATTRIBUTES = {
     "supported_features",
     "fan_mode",
     "fan_modes",
+    "current_humidity",
 }
 
 SENSOR_SCHEMA = vol.Schema(
@@ -484,6 +489,11 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
             self._mark_entity_health(self._real_entity_id, True)
         return value
 
+    def _get_real_current_humidity(self) -> float | None:
+        if not self._real_state:
+            return None
+        return self._real_state.attributes.get(ATTR_CURRENT_HUMIDITY)
+
     def _get_active_sensor_temperature(self) -> float | None:
         sensor = self._sensor_lookup.get(self._selected_sensor_name)
         if not sensor:
@@ -624,6 +634,7 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
                 ATTR_REAL_CURRENT_TEMPERATURE: self._get_real_current_temperature(),
                 ATTR_REAL_TARGET_TEMPERATURE: self._last_real_target_temp
                 or self._get_real_target_temperature(),
+                ATTR_REAL_CURRENT_HUMIDITY: self._get_real_current_humidity(),
                 ATTR_SELECTED_SENSOR_OPTIONS: {
                     item.name: (
                         self._real_entity_id if item.is_physical else item.entity_id
