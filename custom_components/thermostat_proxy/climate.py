@@ -120,7 +120,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_DEFAULT_SENSOR): cv.string,
         vol.Optional(CONF_PHYSICAL_SENSOR_NAME): cv.string,
-        vol.Optional(CONF_PHYSICAL_SENSOR_NAME): cv.string,
         vol.Optional(CONF_USE_LAST_ACTIVE_SENSOR, default=False): cv.boolean,
         vol.Optional(CONF_COOLDOWN_PERIOD, default=DEFAULT_COOLDOWN_PERIOD): vol.All(
             cv.time_period, cv.positive_timedelta
