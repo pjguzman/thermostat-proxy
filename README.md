@@ -27,6 +27,16 @@ A Home Assistant custom integration that lets you expose a virtual `climate` ent
 - **User Log Attribution**: Logbook entries for target temperature or preset changes will show which user performed the action.
 - Default sensor selector includes a "Last active sensor" option (during setup or in options) so the proxy resumes with the most recently selected sensor instead of the configured default.
 
+## Configuration
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `name` | Yes | `Thermostat Proxy` | The name of the virtual climate entity. |
+| `thermostat` | Yes | | The entity ID of the physical thermostat to wrap. |
+| `target_sensor` | No | | The entity ID of the default temperature sensor to use. If not specified, the proxy will default to the `Physical Entity` preset. |
+| `physical_sensor_name` | No | `Physical Entity` | The name of the preset representing the physical thermostat itself. |
+| `cooldown_period` | No | `0` (Disabled) | **Minimum Adjustment Interval**: Minimum time (in seconds) between automatic updates to the physical thermostat. Useful for preventing rapid cycling with noisy sensors. Retries automatically when cooldown expires. |
+
 ## How It Works
 
 - `current_temperature` reflects the selected sensor. If its state is `unknown`/`unavailable`, the entity reports the real thermostat’s own temperature.
