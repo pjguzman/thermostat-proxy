@@ -248,7 +248,6 @@ class CustomThermostatEntity(RestoreEntity, ClimateEntity):
         default_sensor: str | None,
         unique_id: str | None,
         physical_sensor_name: str | None,
-        physical_sensor_name: str | None,
         use_last_active_sensor: bool,
         cooldown_period: float | int | datetime.timedelta = 0,
     ) -> None:
