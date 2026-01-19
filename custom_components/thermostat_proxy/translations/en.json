@@ -48,8 +48,8 @@
           "physical_sensor_name": "Physical thermostat preset name",
           "default_sensor": "Default sensor",
           "cooldown_period": "Minimum adjustment interval (seconds)",
-          "min_temp": "Minimum safe temperature limit (optional)",
-          "max_temp": "Maximum safe temperature limit (optional)"
+          "min_temp": "Minimum safe temperature limit (set to 0 to disable)",
+          "max_temp": "Maximum safe temperature limit (set to 0 to disable)"
         }
       }
     },
@@ -75,8 +75,8 @@
         "data": {
           "default_sensor": "Default sensor",
           "cooldown_period": "Minimum adjustment interval (seconds)",
-          "min_temp": "Minimum safe temperature limit (optional)",
-          "max_temp": "Maximum safe temperature limit (optional)"
+          "min_temp": "Minimum safe temperature limit (set to 0 to disable)",
+          "max_temp": "Maximum safe temperature limit (set to 0 to disable)"
         }
       }
     },

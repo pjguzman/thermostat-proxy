@@ -308,8 +308,8 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ) or PHYSICAL_SENSOR_NAME
 
             cooldown_period = user_input.get(CONF_COOLDOWN_PERIOD, DEFAULT_COOLDOWN_PERIOD)
-            min_temp = user_input.get(CONF_MIN_TEMP)
-            max_temp = user_input.get(CONF_MAX_TEMP)
+            min_temp = user_input.get(CONF_MIN_TEMP) or None
+            max_temp = user_input.get(CONF_MAX_TEMP) or None
 
             if any(
                 physical_sensor_name.lower() == sensor_name.lower()
@@ -391,18 +391,15 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         }
 
         number_selector = selector.NumberSelector(
-            selector.NumberSelectorConfig(min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX)
+            selector.NumberSelectorConfig(min=0, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX)
         )
-
-        min_temp_kwargs = {}
-        if self._min_temp is not None:
-            min_temp_kwargs["default"] = self._min_temp
-        schema_fields[vol.Optional(CONF_MIN_TEMP, **min_temp_kwargs)] = number_selector
-
-        max_temp_kwargs = {}
-        if self._max_temp is not None:
-            max_temp_kwargs["default"] = self._max_temp
-        schema_fields[vol.Optional(CONF_MAX_TEMP, **max_temp_kwargs)] = number_selector
+        
+        # Show current values as defaults during reconfigure (0 = disabled)
+        min_temp_default = self._min_temp if self._min_temp is not None else 0
+        max_temp_default = self._max_temp if self._max_temp is not None else 0
+        
+        schema_fields[vol.Optional(CONF_MIN_TEMP, default=min_temp_default)] = number_selector
+        schema_fields[vol.Optional(CONF_MAX_TEMP, default=max_temp_default)] = number_selector
 
         if sensor_names:
             default_options = [
@@ -500,8 +497,8 @@ class CustomThermostatOptionsFlowHandler(config_entries.OptionsFlow):
         errors: dict[str, str] = {}
         if user_input is not None:
             default_sensor = user_input.get(CONF_DEFAULT_SENSOR)
-            min_temp = user_input.get(CONF_MIN_TEMP)
-            max_temp = user_input.get(CONF_MAX_TEMP)
+            min_temp = user_input.get(CONF_MIN_TEMP) or None
+            max_temp = user_input.get(CONF_MAX_TEMP) or None
             
             if default_sensor and default_sensor not in (*sensor_names, DEFAULT_SENSOR_LAST_ACTIVE):
                 errors["base"] = "invalid_default_sensor"
@@ -556,18 +553,15 @@ class CustomThermostatOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
         number_selector = selector.NumberSelector(
-            selector.NumberSelectorConfig(min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX)
+            selector.NumberSelectorConfig(min=0, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX)
         )
-
-        min_temp_kwargs = {}
-        if current_min_temp is not None:
-            min_temp_kwargs["default"] = current_min_temp
-        schema_fields[vol.Optional(CONF_MIN_TEMP, **min_temp_kwargs)] = number_selector
-
-        max_temp_kwargs = {}
-        if current_max_temp is not None:
-            max_temp_kwargs["default"] = current_max_temp
-        schema_fields[vol.Optional(CONF_MAX_TEMP, **max_temp_kwargs)] = number_selector
+        
+        # Show current values as defaults in options (0 = disabled)
+        min_temp_default = current_min_temp if current_min_temp is not None else 0
+        max_temp_default = current_max_temp if current_max_temp is not None else 0
+        
+        schema_fields[vol.Optional(CONF_MIN_TEMP, default=min_temp_default)] = number_selector
+        schema_fields[vol.Optional(CONF_MAX_TEMP, default=max_temp_default)] = number_selector
 
         data_schema = vol.Schema(schema_fields)
 
