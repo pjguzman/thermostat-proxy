@@ -348,11 +348,9 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_PHYSICAL_SENSOR_NAME: self._physical_sensor_name,
                     CONF_COOLDOWN_PERIOD: self._cooldown_period,
                     CONF_USE_LAST_ACTIVE_SENSOR: self._use_last_active_sensor,
+                    CONF_MIN_TEMP: min_temp,
+                    CONF_MAX_TEMP: max_temp,
                 }
-                if min_temp is not None:
-                    data[CONF_MIN_TEMP] = min_temp
-                if max_temp is not None:
-                    data[CONF_MAX_TEMP] = max_temp
                 if self._use_last_active_sensor:
                     data[CONF_DEFAULT_SENSOR] = DEFAULT_SENSOR_LAST_ACTIVE
                 elif default_sensor:
@@ -392,19 +390,31 @@ class CustomThermostatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
         }
 
-        number_selector = selector.NumberSelector(
-            selector.NumberSelectorConfig(min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX)
-        )
-
-        min_temp_kwargs = {}
         if self._min_temp is not None:
-            min_temp_kwargs["default"] = self._min_temp
-        schema_fields[vol.Optional(CONF_MIN_TEMP, **min_temp_kwargs)] = number_selector
+            schema_fields[vol.Optional(CONF_MIN_TEMP, default=self._min_temp)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
+        else:
+            schema_fields[vol.Optional(CONF_MIN_TEMP)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
 
-        max_temp_kwargs = {}
         if self._max_temp is not None:
-            max_temp_kwargs["default"] = self._max_temp
-        schema_fields[vol.Optional(CONF_MAX_TEMP, **max_temp_kwargs)] = number_selector
+            schema_fields[vol.Optional(CONF_MAX_TEMP, default=self._max_temp)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
+        else:
+            schema_fields[vol.Optional(CONF_MAX_TEMP)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
 
         if sensor_names:
             default_options = [
@@ -520,12 +530,9 @@ class CustomThermostatOptionsFlowHandler(config_entries.OptionsFlow):
                     data[CONF_USE_LAST_ACTIVE_SENSOR] = False
                 
                 data[CONF_COOLDOWN_PERIOD] = user_input.get(CONF_COOLDOWN_PERIOD, DEFAULT_COOLDOWN_PERIOD)
+                data[CONF_MIN_TEMP] = min_temp
+                data[CONF_MAX_TEMP] = max_temp
                 
-                if min_temp is not None:
-                    data[CONF_MIN_TEMP] = min_temp
-                if max_temp is not None:
-                    data[CONF_MAX_TEMP] = max_temp
-                    
                 return self.async_create_entry(title="", data=data)
 
         schema_fields: dict[Any, Any] = {}
@@ -560,19 +567,31 @@ class CustomThermostatOptionsFlowHandler(config_entries.OptionsFlow):
             )
         )
 
-        number_selector = selector.NumberSelector(
-            selector.NumberSelectorConfig(min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX)
-        )
-
-        min_temp_kwargs = {}
         if current_min_temp is not None:
-            min_temp_kwargs["default"] = current_min_temp
-        schema_fields[vol.Optional(CONF_MIN_TEMP, **min_temp_kwargs)] = number_selector
+            schema_fields[vol.Optional(CONF_MIN_TEMP, default=current_min_temp)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
+        else:
+            schema_fields[vol.Optional(CONF_MIN_TEMP)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
 
-        max_temp_kwargs = {}
         if current_max_temp is not None:
-            max_temp_kwargs["default"] = current_max_temp
-        schema_fields[vol.Optional(CONF_MAX_TEMP, **max_temp_kwargs)] = number_selector
+            schema_fields[vol.Optional(CONF_MAX_TEMP, default=current_max_temp)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
+        else:
+            schema_fields[vol.Optional(CONF_MAX_TEMP)] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=-100, max=100, step=0.5, mode=selector.NumberSelectorMode.BOX
+                )
+            )
 
         data_schema = vol.Schema(schema_fields)
 
